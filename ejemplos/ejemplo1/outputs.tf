@@ -1,7 +1,8 @@
 
-output "ip_del_contenedor"{
-    value = docker_container.contenedor_nginx.network_data[0].ip_address
+output "inventario"{
+    value = join("\n",[for value in docker_container.contenedor_nginx: "${value.name}=${value.ip_address}"])
 }
+
 
 
 

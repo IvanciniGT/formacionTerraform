@@ -3,14 +3,26 @@ terraform {
         docker = {
             source = "kreuzwerker/docker"
         }
+        null = {
+            source = "hashicorp/null"
+        }
     }
 }
 
 provider docker {
 }
 
+provider null {
+}
+
+resource "null_resource" "inventario"{
+    provisioner "local-exec" {
+        command = "rm -f inventario.txt"
+    }
+}
 resource "docker_container" "contenedor_nginx"{ 
-    name = "mi-contenedor-de-nginx"
+    for_each = toset(var.contenedores)
+    name = each.key
     image = docker_image.imagen_nginx.latest
 
     provisioner "local-exec" {
@@ -38,5 +50,12 @@ resource "docker_image" "imagen_nginx"{
 }
 
 
-
+resource "null_resource" "duplicar_inventario"{
+    triggers = {
+        nada = join("",values(docker_container.contenedor_nginx)[*].ip_address)
+    }
+    provisioner "local-exec" {
+        command = "cp inventario.txt inventario.backup"
+    }
+}
 

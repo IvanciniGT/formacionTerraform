@@ -4,3 +4,8 @@ variable "imagen_de_contenedor" {
     type = string
     default = "nginx:latest"
 }
+variable "contenedores" {
+    description = "Nombres de los contenedores que vamos a generar"
+    type = list(string)
+    default = []
+}
