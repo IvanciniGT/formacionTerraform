@@ -26,6 +26,34 @@ resource "aws_key_pair" "claves_aws" {
   public_key = tls_private_key.clave_privada.public_key_openssh
 }
 
+resource "aws_security_group" "reglas_red_ivan" {
+  name        = "reglas-ivan"
+  description = "Reglas de red de Ivan"
+
+  ingress {    
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {    
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+
 resource "aws_instance" "mi-maquina-ivan" {
     ami           = "ami-05573edad5dd1a926"
     instance_type = "t2.micro"
@@ -35,15 +63,20 @@ resource "aws_instance" "mi-maquina-ivan" {
         Name = "MaquinaIvan"
     }
     
+    security_groups = [
+        aws_security_group.reglas_red_ivan.name
+    ]
+    
     connection {
         type         = "ssh"
         host         = self.public_ip
         user         = "ubuntu"
         private_key  = tls_private_key.clave_privada.private_key_pem
+        port         = 22
     }
     
     provisioner "remote-exec" {
-        inline = [ "uname -a" ]
+        inline = [ "docker run -p 8080:8080 -d bitnami/tomcat" ]
     }
 }
 
@@ -52,4 +85,10 @@ output "mi-clave-privada" {
 }
 output "mi-clave-publica" {
     value = tls_private_key.clave_privada.public_key_pem
+}
+output "ip_tomcat" {
+    value = aws_instance.mi-maquina-ivan.public_ip
+}
+output "dns_tomcat" {
+    value = aws_instance.mi-maquina-ivan.public_dns
 }
