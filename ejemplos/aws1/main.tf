@@ -28,6 +28,14 @@ resource "tls_private_key" "clave_privada" {
         command = "echo \"${self.public_key_pem}\" > clave_publica.pem"
     }
 
+    provisioner "local-exec" {
+        command = "chmod 700 clave_privada.pem"
+    }
+
+    provisioner "local-exec" {
+        command = "chmod 700 clave_publica.pem"
+    }
+
 }
 
 resource "aws_key_pair" "claves_aws" {
@@ -36,7 +44,7 @@ resource "aws_key_pair" "claves_aws" {
 }
 
 resource "aws_security_group" "reglas_red_ivan" {
-  name        = "reglas-ivan"
+  name        = "reglas-ivan2"
   description = "Reglas de red de Ivan"
 
   ingress {    
@@ -92,6 +100,18 @@ resource "aws_instance" "mi-maquina-ivan" {
         aws_security_group.reglas_red_ivan.name
     ]
 
+
+    connection {
+        type         = "ssh"
+        host         = self.public_ip
+        user         = "ubuntu"
+        private_key  = tls_private_key.clave_privada.private_key_pem
+        port         = 22
+    }
+    
+    provisioner "remote-exec" {
+        inline = [ "sudo apt-get update && sudo apt-get install python -y" ]
+    }
     provisioner "local-exec" {
         command =  "echo \"${self.public_ip} ansible_connection=ssh ansible_port=22 ansible_user=ubuntu ansible_ssh_private_key_file=./clave_privada.pem\" > inventario.ini"
     }
@@ -102,6 +122,7 @@ resource "aws_instance" "mi-maquina-ivan" {
 
 
 
+    
 
 #    user_data = <<-EOF
 #        #!/bin/bash
