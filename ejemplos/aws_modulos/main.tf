@@ -40,4 +40,13 @@ module "red" {
 
 }
 
+module "instancia" {
+    source = "./instancia"
+    aws_ami_owners=var.aws_ami_owners
+    aws_ami_nombre=var.aws_ami_nombre
+    volumenes = var.volumenes
+    nombre_clave=var.id_clave
+    nombre_maquina=var.nombre_maquina
+    security_groups=module.red.OUTPUT_DEL_SECURITY_GROUP_ID
+}
 

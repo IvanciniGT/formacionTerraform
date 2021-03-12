@@ -6,6 +6,25 @@ terraform {
         }
     }
 }
+locals { # CONSTANTES
+    ingress = {
+                "22": {    
+                        "to_port": 22
+                        "protocol": "tcp"
+                        "cidr_blocks": ["0.0.0.0/0"]
+                },
+                "8080": {    
+                        "to_port": 8080
+                        "protocol": "tcp"
+                        "cidr_blocks": ["0.0.0.0/0"]
+                },
+                "3306": {    
+                        "to_port": 3306
+                        "protocol": "tcp"
+                        "cidr_blocks": ["10.0.1.0/24"]
+                }
+              }
+}
 # Variables
 # nombre_vpc= Este es el nombre de la VPC
 # cidr_vpc= CIDR de la CPV
@@ -97,3 +116,29 @@ resource "aws_route_table_association" "conexion_subredes" {
 }
 
 # SecurityGroups
+resource "aws_security_group" "security_group" {
+  name        = "${var.nombre_vpc}_sg"
+  description = "SecurityGroup para la VPC: ${var.nombre_vpc}"
+  
+  dynamic "ingress" {    
+    iterator = ingress_actual
+    for_each = local.ingress
+    
+    content {
+        from_port   = tonumber(ingress_actual.key)
+        to_port     = ingress_actual.value["to_port"]
+        protocol    = ingress_actual.value["protocol"]
+        cidr_blocks = ingress_actual.value["cidr_blocks"]
+    }
+  }
+  
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+# TODO: OUTPUT DEL SECURITY_GROUP.ID
